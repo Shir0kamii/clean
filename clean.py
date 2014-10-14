@@ -37,10 +37,18 @@ def ask_user_before_remove(file):
         answer = input(prompt)
     return (answer == 'y')
 
-def remove(to_clean, force):
+def remove(to_clean, force, verbose):
     for file in to_clean:
-        if (not force and ask_user_before_remove(file)):
+        removed = False
+        if not force: 
+            if ask_user_before_remove(file):
+                os.remove(file)
+                removed = True
+        else:
             os.remove(file)
+            removed = True
+        if (verbose and removed):
+            print("Removed {}.".format(file))
 
 def run(args):
     """run the program"""
@@ -48,14 +56,15 @@ def run(args):
     cible = os.getenv("PWD", '.')
     file_list = list_file_fullpath(cible)
     to_clean = list_files_to_clean(pattern_list, file_list)
-    remove(to_clean, args.force)
+    remove(to_clean, args.force, args.verbose)
 
 def main():
     """Parse the arguments and pass it to run"""
-    version = 0.1
+    version = 0.2
     parser = argparse.ArgumentParser(prog="clean")
     parser.add_argument("--version", action="version", version="%(prog)s {}".format(version))
     parser.add_argument("-f", "--force", action="store_true", help="Don't prompt the user before removal")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Explain what is being done")
     run(parser.parse_args())
 
 if __name__ == '__main__':
