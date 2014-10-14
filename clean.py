@@ -2,10 +2,17 @@
 
 import argparse, os, fnmatch
 
-def list_file_fullpath(directory):
+def list_files(directories, recursive=False):
     """return the list of files in directory with full path"""
-    _ = [os.path.join(directory, file) for file in os.listdir(directory)]
-    return [file for file in _ if os.path.isfile(file)]
+    lst = list()
+    for directory in directories:
+        for file in os.listdir(directory):
+            filepath = os.path.join(directory, file)
+            if os.path.isdir(filepath) and recursive:
+                lst += list_files([filepath], recursive)
+            elif os.path.isfile(filepath):
+                lst += [filepath]
+    return lst
 
 def read_pattern_file(fullpath):
     """return the list of patterns in a file"""
@@ -24,11 +31,12 @@ def pattern_to_use():
         print("Created a default configuration")
     return read_pattern_file(dir_config + "default")
 
-def list_files_to_clean(pattern_list, file_list):
+def select_files_to_clean(pattern_list, file_list):
     """Return all the files in file_list that match at least one of the patterns in pattern_list"""
     return [file for pattern in pattern_list for file in file_list if fnmatch.fnmatch(file, pattern)]
 
 def ask_user_before_remove(file):
+    """prompt the user before deleting a file"""
     prompt = "Do you want to remove {} ? "
     prompt = prompt.format(file)
     answer = input(prompt)
@@ -38,6 +46,7 @@ def ask_user_before_remove(file):
     return (answer == 'y')
 
 def remove(to_clean, force, verbose):
+    """Remove a file, respecting the given options"""
     for file in to_clean:
         removed = False
         if not force: 
@@ -52,19 +61,26 @@ def remove(to_clean, force, verbose):
 
 def run(args):
     """run the program"""
-    pattern_list = pattern_to_use()
-    cible = os.getenv("PWD", '.')
-    file_list = list_file_fullpath(cible)
-    to_clean = list_files_to_clean(pattern_list, file_list)
+    pattern_list = args.pattern if args.pattern else pattern_to_use()
+
+    cibles = args.target if args.target != [] else [os.getenv("PWD", '.')]
+
+    file_list = list_files(cibles, args.recursive)
+
+    to_clean = select_files_to_clean(pattern_list, file_list)
+
     remove(to_clean, args.force, args.verbose)
 
 def main():
     """Parse the arguments and pass it to run"""
-    version = 0.2
+    version = 0.3
     parser = argparse.ArgumentParser(prog="clean")
     parser.add_argument("--version", action="version", version="%(prog)s {}".format(version))
     parser.add_argument("-f", "--force", action="store_true", help="Don't prompt the user before removal")
     parser.add_argument("-v", "--verbose", action="store_true", help="Explain what is being done")
+    parser.add_argument("-p", "--pattern", action="append", help="Use these patterns instead of pattern files")
+    parser.add_argument("-r", "--recursive", action="store_true", help="Make a recursive clean")
+    parser.add_argument("target", nargs="*", help="The directories to clean")
     run(parser.parse_args())
 
 if __name__ == '__main__':
