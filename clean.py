@@ -2,6 +2,18 @@
 
 import argparse, os, fnmatch
 
+def question_yn(prompt):
+    """Ask the user for a yes/no answer"""
+    answer = input(prompt)
+    while (answer != "n" and answer != "y"):
+        print("Please answer y for yes or n for no.")
+        answer = input(prompt)
+    return (answer =="y")
+
+def security(to_clean, files, patterns):
+    if len(to_clean) > 5:
+        return True
+
 def list_files(directories, recursive=False):
     """return the list of files in directory with full path"""
     lst = list()
@@ -35,22 +47,12 @@ def select_files_to_clean(pattern_list, file_list):
     """Return all the files in file_list that match at least one of the patterns in pattern_list"""
     return [file for pattern in pattern_list for file in file_list if fnmatch.fnmatch(file, pattern)]
 
-def ask_user_before_remove(file):
-    """prompt the user before deleting a file"""
-    prompt = "Do you want to remove {} ? "
-    prompt = prompt.format(file)
-    answer = input(prompt)
-    while (answer != "n" and answer != "y"):
-        print("Please answer y for yes or n for no.")
-        answer = input(prompt)
-    return (answer == 'y')
-
 def remove(to_clean, force, verbose):
     """Remove a file, respecting the given options"""
     for file in to_clean:
         removed = False
         if not force: 
-            if ask_user_before_remove(file):
+            if question_yn("Do you want to remove {} ? ".format(file)):
                 os.remove(file)
                 removed = True
         else:
