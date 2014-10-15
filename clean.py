@@ -10,9 +10,11 @@ def question_yn(prompt):
         answer = input(prompt)
     return (answer =="y")
 
-def security(to_clean, files, patterns):
-    if len(to_clean) > 5:
-        return True
+def security(to_clean, files, patterns, args):
+    if len(to_clean) >= 5:
+        if args.force and not question_yn("You're about to remove {} files. Do you want to continue ? ".format(len(to_clean))):
+            return True
+    return (False)
 
 def list_files(directories, recursive=False):
     """return the list of files in directory with full path"""
@@ -71,11 +73,14 @@ def run(args):
 
     to_clean = select_files_to_clean(pattern_list, file_list)
 
+    if(security(to_clean, file_list, pattern_list, args)):
+        return False
+
     remove(to_clean, args.force, args.verbose)
 
 def main():
     """Parse the arguments and pass it to run"""
-    version = 0.3
+    version = 0.4
     parser = argparse.ArgumentParser(prog="clean")
     parser.add_argument("--version", action="version", version="%(prog)s {}".format(version))
     parser.add_argument("-f", "--force", action="store_true", help="Don't prompt the user before removal")
