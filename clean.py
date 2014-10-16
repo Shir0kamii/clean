@@ -3,21 +3,32 @@
 import argparse, os, fnmatch
 
 def question_yn(prompt):
-    """Ask the user for a yes/no answer"""
-    answer = input(prompt)
-    while (answer != "n" and answer != "y"):
+    """Ask the user for a yes/no answer
+    
+    The user is stuck in a loop while he doesn't answer "y" or "n".
+    The same question <prompt> will be asked each time."""
+
+    answer = input(prompt) 
+    while (answer != "n" and answer != "y"): 
         print("Please answer y for yes or n for no.")
         answer = input(prompt)
     return (answer =="y")
 
 def security(to_clean, files, patterns, args):
+    """Try to prevent the user from making big mistakes
+    
+    if the user is about to remove 5 or more files, ask if he's sure."""
+
     if len(to_clean) >= 5:
         if args.force and not question_yn("You're about to remove {} files. Do you want to continue ? ".format(len(to_clean))):
             return True
     return (False)
 
 def list_files(directories, recursive=False):
-    """return the list of files in directory with full path"""
+    """return the list of files in directory with full path
+
+    return only files, not directory
+    Can be recursive"""
     lst = list()
     for directory in directories:
         for file in os.listdir(directory):
@@ -29,28 +40,46 @@ def list_files(directories, recursive=False):
     return lst
 
 def read_pattern_file(fullpath):
-    """return the list of patterns in a file"""
+    """return the list of patterns in a file
+
+    The file must have one pattern by line"""
+
     with open(fullpath) as file:
         l = list(map(str.strip, file.readlines()))
     return l
 
-def pattern_to_use():
-    """function used to find which list of pattern the program will use"""
-    dir_config = os.getenv("HOME") + "/.config/clean/"
-    pattern_list = list()
+def init():
+    """initialize the default configuration if not present
+
+    create the directory clean in $HOME/.config and write a default file containing the default configuration"""
+
     if not (os.path.isdir(dir_config)):
         os.makedirs(dir_config)
         with open(dir_config + "default", mode='w') as default:
             default.write("#*#\n*~\n")
         print("Created a default configuration")
+    
+
+def pattern_to_use():
+    """function used to find which list of pattern the program will use
+
+    This function will be given parameter later, but now it only reads the default configuration."""
+
+    dir_config = os.getenv("HOME") + "/.config/clean/"
+    pattern_list = list()
     return read_pattern_file(dir_config + "default")
 
 def select_files_to_clean(pattern_list, file_list):
-    """Return all the files in file_list that match at least one of the patterns in pattern_list"""
+    """Return all the files in file_list that match at least one of the patterns in pattern_list
+
+    Filter the files to be clean.
+    Can probably made faster, but it's not the priority."""
     return [file for pattern in pattern_list for file in file_list if fnmatch.fnmatch(file, pattern)]
 
 def remove(to_clean, force, verbose):
-    """Remove a file, respecting the given options"""
+    """Remove a file, respecting the given options
+
+    The force option skip the question, and the verbose option print which file have been removed."""
     for file in to_clean:
         removed = False
         if not force: 
@@ -64,7 +93,10 @@ def remove(to_clean, force, verbose):
             print("Removed {}.".format(file))
 
 def run(args):
-    """run the program"""
+    """run the program
+
+    Launch one by one all the important functions of the program."""
+
     pattern_list = args.pattern if args.pattern else pattern_to_use()
 
     cibles = args.target if args.target != [] else [os.getenv("PWD", '.')]
