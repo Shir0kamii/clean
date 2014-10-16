@@ -22,7 +22,13 @@ def security(to_clean, files, patterns, args):
     if len(to_clean) >= 5:
         if args.force and not question_yn("You're about to remove {} files. Do you want to continue ? ".format(len(to_clean))):
             return True
-    return (False)
+
+    if len(to_clean) >= len(files)//2+2:
+        print("You're about to remove {} out of {} files.".format(len(to_clean), len(files)))
+        if not question_yn("Is it really what you want to do ? "):
+            return True
+
+    return False
 
 def list_files(directories, recursive=False):
     """return the list of files in directory with full path
