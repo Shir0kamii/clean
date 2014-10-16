@@ -66,21 +66,32 @@ def init():
         print("Created a default configuration")
     
 
-def pattern_to_use():
+def select_patterns(list_files):
     """function used to find which list of pattern the program will use
 
-    This function will be given parameter later, but now it only reads the default configuration."""
+    if the argument given is None, use the default config file.
+    Else, combine all the config files given."""
 
     dir_config = os.getenv("HOME") + "/.config/clean/"
+    
     pattern_list = list()
-    return read_pattern_file(dir_config + "default")
+    if (list_files == None):
+        return read_pattern_file(dir_config + "default")
+    for config in list_files:
+        pattern_list += read_pattern_file(dir_config + config)
+    return list(set(pattern_list))
 
 def select_files_to_clean(pattern_list, file_list):
     """Return all the files in file_list that match at least one of the patterns in pattern_list
 
     Filter the files to be clean.
-    Can probably made faster, but it's not the priority."""
-    return [file for pattern in pattern_list for file in file_list if fnmatch.fnmatch(file, pattern)]
+    Can probably be done faster, but it's not the priority."""
+    result = list()
+    for file in file_list:
+        for pattern in pattern_list:
+            if fnmatch.fnmatch(os.path.basename(file), pattern):
+                result += [file]
+    return result
 
 def remove(to_clean, force, verbose):
     """Remove a file, respecting the given options
@@ -103,7 +114,13 @@ def run(args):
 
     Launch one by one all the important functions of the program."""
 
-    pattern_list = args.pattern if args.pattern else pattern_to_use()
+    # patterns part
+    if args.pattern:
+        pattern_list = args.pattern
+        if args.configuration:
+            pattern_list += select_patterns(args.configuration)
+    else:
+        pattern_list = select_patterns(args.configuration)
 
     cibles = args.target if args.target != [] else [os.getenv("PWD", '.')]
 
@@ -118,13 +135,14 @@ def run(args):
 
 def main():
     """Parse the arguments and pass it to run"""
-    version = 0.4
+    version = 0.7
     parser = argparse.ArgumentParser(prog="clean")
     parser.add_argument("--version", action="version", version="%(prog)s {}".format(version))
     parser.add_argument("-f", "--force", action="store_true", help="Don't prompt the user before removal")
     parser.add_argument("-v", "--verbose", action="store_true", help="Explain what is being done")
-    parser.add_argument("-p", "--pattern", action="append", help="Use these patterns instead of pattern files")
     parser.add_argument("-r", "--recursive", action="store_true", help="Make a recursive clean")
+    parser.add_argument("-p", "--pattern", action="append", help="Use these patterns instead of pattern files")
+    parser.add_argument("-c", "--configuration", action="append", help="Use the specified config file")
     parser.add_argument("target", nargs="*", help="The directories to clean")
     run(parser.parse_args())
 
