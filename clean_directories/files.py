@@ -32,22 +32,15 @@ class PatternFile:
         # Create the file if he doesn't exist
         if not os.path.exists(self.fullpath):
             open(self.fullpath, 'a').close()
-
+        
+        # Read the file and yield each pattern
         with open(self.fullpath) as file:
             for pattern in file:
                 yield pattern.strip()
 
 
-    def __next__(self):
-        try:
-            return next(self.pattern_iterator)
-        except StopIteration:
-            self.pattern_file.close()
-            raise
-
-
     def __enter__(self):
-        """Return file handler, open with the mode given at initialisation"""
+        """Return file handler, opened with the mode given at initialisation"""
 
         self.file = open(self.fullpath, self.mode)
         return self.file
@@ -57,6 +50,7 @@ class PatternFile:
         self.file.close()
 
 class CleaningFile:
+    """Handler for a file being cleaned"""
 
     # Asking user
     prompt = 'Do your really want to remove {} ? '
@@ -89,6 +83,7 @@ class CleaningFile:
             print(self.removal_log.format(self.fullpath))
 
 class CleaningRequest:
+    """Abstraction of a request using pattern matching"""
 
     def __init__(self, patterns, directories=None, recursive=False):
         self.patterns = patterns
@@ -96,37 +91,61 @@ class CleaningRequest:
         self.recursive = recursive
 
 
-    def recursive_cleaning(self, directory):
+    def recursive_request(self, directory):
+        """recursive request"""
+
         for root, dirs, files in os.walk(directory):
+
+            # Function returning fullpath
             fullpath = lambda f: os.path.join(root, f)
+
+            # matched files in current directory
             rv = list(map(fullpath, self.match_files(files)))
+
+            # recursive calls
             for directory in dirs:
                 rv.extend(self.recursive_cleaning(directory))
+
             return rv
+
+        # if nothing in directory
         return list()
 
 
-    def flat_cleaning(self, directory):
+    def flat_request(self, directory):
+        """flat request"""
         return self.match_files(os.listdir(directory))
 
 
     def __call__(self, directory, recursive=False):
+        """dispatch request between recursive of flat"""
         if recursive:
-            return self.recursive_cleaning(directory)
-        return self.flat_cleaning(directory)
+            return self.recursive_request(directory)
+        return self.flat_request(directory)
 
 
     def match_files(self, entities):
+        """match set of files against patterns"""
+
+        # entities is a set of non matched files
         entities = set(entities)
 
         for pattern in self.patterns:
+
+            # match files against a single pattern
             matched_files = set(fnmatch.filter(entities, pattern))
+
+            # remove matched files from entities
             entities = entities.symmetric_difference(matched_files)
+
+            # yield each matched files
             yield from matched_files
 
 
     def __iter__(self):
+        """Request using initialization values"""
 
+        # Fail safe
         if not self.directories:
             self.directories = list()
 
