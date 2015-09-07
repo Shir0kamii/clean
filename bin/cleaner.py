@@ -13,14 +13,24 @@ def version():
 
 def main(configuration, *directories,
         non_recursive:'n'=False, verbose:'v'=False, force:'p'=False):
+    """
 
+    non_recursive: Don't make a recursive walk
+
+    verbose: Print what the script is doing
+
+    force: Don't ask the user before removal
+    """
+
+    # Default parameter
     if len(directories) == 0:
         directories = ('.',)
 
+    # Read patterns
     patterns = list(files.PatternFile(configuration))
 
+    # Creating and processing the request
     request = files.CleaningRequest(patterns, directories, not non_recursive)
-
     for file in request:
         files.CleaningFile(file, verbose, force).remove()
 

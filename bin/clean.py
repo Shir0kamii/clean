@@ -28,16 +28,18 @@ def main(*directories, force:'f'=False,
     configuration: Read patterns from given files
     """
 
+    # default parameters
     if len(directories) == 0:
         directories = ('.',)
     if not pattern and not configuration:
         configuration = ['default']
 
+    # Reading patterns from configuration files
     for config_file in configuration:
         pattern.extend(files.PatternFile(config_file))
 
+    # Creating and processing the request
     request = files.CleaningRequest(pattern, directories, recursive)
-
     for file in request:
         files.CleaningFile(file, verbose, force).remove()
 
