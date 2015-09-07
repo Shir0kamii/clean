@@ -11,7 +11,7 @@ def version():
     return "{0} {1}".format(__prog__, __version__)
 
 
-def main(configuration, *directories,
+def _main(configuration, *directories,
         non_recursive:'n'=False, verbose:'v'=False, force:'p'=False):
     """
 
@@ -34,5 +34,8 @@ def main(configuration, *directories,
     for file in request:
         files.CleaningFile(file, verbose, force).remove()
 
+def main():
+    run(_main, alt=version)
+
 if __name__ == '__main__':
-    run(main, alt=version)
+    main()
