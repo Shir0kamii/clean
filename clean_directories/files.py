@@ -94,22 +94,18 @@ class CleaningRequest:
     def recursive_request(self, directory):
         """recursive request"""
 
+        rv = list()
+
         for root, dirs, files in os.walk(directory):
 
             # Function returning fullpath
             fullpath = lambda f: os.path.join(root, f)
 
             # matched files in current directory
-            rv = list(map(fullpath, self.match_files(files)))
-
-            # recursive calls
-            for directory in dirs:
-                rv.extend(self.recursive_cleaning(directory))
-
-            return rv
+            rv.extend(map(fullpath, self.match_files(files)))
 
         # if nothing in directory
-        return list()
+        return rv
 
 
     def flat_request(self, directory):
