@@ -71,7 +71,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['clize'],
+    install_requires=['clize', 'scandir'],
 
     entry_points = {
         'console_scripts': [

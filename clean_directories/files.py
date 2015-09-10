@@ -2,6 +2,13 @@ import os
 import fnmatch
 import functools
 
+# Use the built-in version of scandir/walk if possible, otherwise
+# use the scandir module version
+try:
+    from os import scandir, walk
+except ImportError:
+    from scandir import scandir, walk
+
 class PatternFile:
     """Handler for files containing patterns"""
 
@@ -96,7 +103,7 @@ class CleaningRequest:
 
         rv = list()
 
-        for root, dirs, files in os.walk(directory):
+        for root, dirs, files in walk(directory):
 
             # Function returning fullpath
             fullpath = lambda f: os.path.join(root, f)
