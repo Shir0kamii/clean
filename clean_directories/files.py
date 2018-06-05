@@ -1,6 +1,8 @@
 import os
 import fnmatch
 import functools
+import subprocess
+import shlex
 
 # Use the built-in version of scandir/walk if possible, otherwise
 # use the scandir module version
@@ -55,6 +57,26 @@ class PatternFile:
 
     def __exit__(self, type, value, traceback):
         self.file.close()
+
+    def edit(self, editor='vi', options='', use_env=True):
+        """Open the pattern file with the specified editor
+
+        editor: Default editor
+
+        options: a list of options for the editor
+
+        use_env: Try to guess the editor with $EDITOR, overriding editor
+        """
+
+        # Try to use $EDITOR
+        if use_env and 'EDITOR' in os.environ:
+            editor = os.environ['EDITOR']
+
+        # Format the command
+        command = "{} {} {}".format(editor, options, self.fullpath)
+
+        # Execute the command
+        return subprocess.call(shlex.split(command))
 
 class CleaningFile:
     """Handler for a file being cleaned"""

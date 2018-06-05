@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 from clize import run, parameters
-from clean_directories import files
+from clean_directories import PatternFile, CleaningFile, CleaningRequest
 
 __prog__ = 'clean'
 __version__ = 0.1
@@ -10,6 +10,9 @@ def version():
     """Print the version of the script"""
     return "{0} {1}".format(__prog__, __version__)
 
+
+def edit(pattern_name):
+    PatternFile(pattern_name).edit()
 
 def _main(*directories, force:'f'=False,
         verbose:'v'=False, recursive:'r'=False,
@@ -36,15 +39,15 @@ def _main(*directories, force:'f'=False,
 
     # Reading patterns from configuration files
     for config_file in configuration:
-        pattern.extend(files.PatternFile(config_file))
+        pattern.extend(PatternFile(config_file))
 
     # Creating and processing the request
-    request = files.CleaningRequest(pattern, directories, recursive)
+    request = CleaningRequest(pattern, directories, recursive)
     for file in request:
-        files.CleaningFile(file, verbose, force).remove()
+        CleaningFile(file, verbose, force).remove()
 
 def main():
-    run(_main, alt=[version])
+    run(_main, alt=[version, edit])
 
 if __name__ == '__main__':
     main()
